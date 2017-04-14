@@ -31,6 +31,8 @@ NO_NETWORK=1            # set to 1 to skip network configuration
 IFACE=enp3s0            # interface that we currently use for internet
 BRIDGE=br0              # name for the bridge we will create to share network with the raspbian img
 MAC='52:54:be:36:42:a9' # comment this line for random MAC (maybe annoying if on DHCP)
+BINARY_PATH=/usr/bin    # path prefix for binaries
+NO_GRAPHIC=0            # set to 1 to start in no graphic mode
 
 # sanity checks
 test -f $IMG && test -f $KERNEL || { echo "$IMG or $KERNEL not found"; exit; }
@@ -39,7 +41,7 @@ test -f $IMG && test -f $KERNEL || { echo "$IMG or $KERNEL not found"; exit; }
 
 # some more checks
 [[ "$NO_NETWORK" != "1" ]] && {
-    IP=$( ip a | grep "global $IFACE" | grep -oP '\d{1,3}(.\d{1,3}){3}' | head -1 ) 
+    IP=$( ip a | grep "global $IFACE" | grep -oP '\d{1,3}(.\d{1,3}){3}' | head -1 )
     [[ "$IP" == "" ]]      && { echo "no IP found for $IFACE"; NO_NETWORK=1; }
     type brctl &>/dev/null || { echo "brctl is not installed"; NO_NETWORK=1; }
     modprobe tun &>/dev/null
@@ -55,18 +57,18 @@ test -f $IMG && test -f $KERNEL || { echo "$IMG or $KERNEL not found"; exit; }
 #!/bin/sh
 echo "Executing /etc/qemu-ifup"
 echo "Bringing up \$1 for bridged mode..."
-sudo /usr/bin/ip link set \$1 up promisc on
+sudo $BINARY_PATH/ip link set \$1 up promisc on
 echo "Adding \$1 to $BRIDGE..."
-sudo /usr/bin/brctl addif $BRIDGE \$1
+sudo $BINARY_PATH/brctl addif $BRIDGE \$1
 sleep 2
 EOF
 
   cat > /etc/qemu-ifdown <<EOF
 #!/bin/sh
 echo "Executing /etc/qemu-ifdown"
-sudo /usr/bin/ip link set \$1 down
-sudo /usr/bin/brctl delif $BRIDGE \$1
-sudo /usr/bin/ip link delete dev \$1
+sudo $BINARY_PATH/ip link set \$1 down
+sudo $BINARY_PATH/brctl delif $BRIDGE \$1
+sudo $BINARY_PATH/ip link delete dev \$1
 EOF
 
   chmod 750 /etc/qemu-ifdown /etc/qemu-ifup
@@ -117,11 +119,12 @@ rmdir tmpmnt &>/dev/null
 
 # do it
 qemu-system-arm -kernel $KERNEL -cpu arm1176 -m 256 -M versatilepb $NET_ARGS \
-  -no-reboot -append "root=/dev/sda2 panic=1" -drive format=raw,file=$IMG \
+  $( [[ "$NO_GRAPHIC" != "1" ]] || printf %s '-nographic' ) \
+  -no-reboot -append "root=/dev/sda2 panic=1 $( [[ "$NO_GRAPHIC" != "1" ]] || printf %s 'vga=normal console=ttyAMA0' )" -drive format=raw,file=$IMG \
 
 # restore network to what it was
 [[ "$NO_NETWORK" != "1" ]] && {
-  ip l set down dev $TAPIF 
+  ip l set down dev $TAPIF
   ip tuntap del $TAPIF mode tap
   sysctl net.ipv4.ip_forward="$IPFW"
   ip l set down dev $BRIDGE
