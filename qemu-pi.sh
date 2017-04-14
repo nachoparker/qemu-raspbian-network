@@ -18,7 +18,7 @@
 #
 #   It requires a modified kernel image for qemu. (variable $KERNEL)
 #
-#   It enables SSH on the image (but have to login once on lite version)
+#   It enables SSH on the image
 #
 #   For the network bridge configuration, this needs to be in /etc/sudoers
 #      Cmnd_Alias      QEMU=/usr/bin/ip,/usr/bin/modprobe,/usr/bin/brctl
@@ -43,7 +43,7 @@ test -f $IMG && test -f $KERNEL || { echo "$IMG or $KERNEL not found"; exit; }
     [[ "$IP" == "" ]]      && { echo "no IP found for $IFACE"; NO_NETWORK=1; }
     type brctl &>/dev/null || { echo "brctl is not installed"; NO_NETWORK=1; }
     modprobe tun &>/dev/null
-    grep -q tun <(lsmod)   || { echo "need to tun module"    ; NO_NETWORK=1; }
+    grep -q tun <(lsmod)   || { echo "need tun module"       ; NO_NETWORK=1; }
 }
 
 # network configuration
