@@ -102,16 +102,23 @@ SECTOR2=$( fdisk -l $IMG | grep Linux | awk '{ print $2 }' )
 OFFSET1=$(( SECTOR1 * 512 ))
 OFFSET2=$(( SECTOR2 * 512 ))
 
+# make 'boot' vfat partition available locally
 mkdir -p tmpmnt
 mount $IMG -o offset=$OFFSET1 tmpmnt
 touch tmpmnt/ssh   # this enables ssh
 umount tmpmnt
 
+# make 'linux' ext4 partition available locally
 mount $IMG -o offset=$OFFSET2 tmpmnt
 cat > tmpmnt/etc/udev/rules.d/90-qemu.rules <<EOF
 KERNEL=="sda", SYMLINK+="mmcblk0"
 KERNEL=="sda?", SYMLINK+="mmcblk0p%n"
 KERNEL=="sda2", SYMLINK+="root"
+EOF
+# Fix a well documented issue - the kernel panics as init exits;
+# Ref: http://stackoverflow.com/questions/38837606/emulate-raspberry-pi-raspbian-with-qemu
+cat > tmpmnt/etc/ld.so.preload <<EOF
+#/usr/lib/arm-linux-gnueabihf/libarmmem.so
 EOF
 
 umount -l tmpmnt
