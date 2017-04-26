@@ -9,4 +9,6 @@ unzip raspbian_lite_latest.zip
 sudo ./qemu-pi.sh *-raspbian-jessie-lite.img
 ```
 
+Note that it is recommended to use `qemu-arm` not older than 2.8.0 (see code)
+
 See details on https://ownyourbits.com/2017/02/06/raspbian-on-qemu-with-network-access/

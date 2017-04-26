@@ -115,11 +115,16 @@ KERNEL=="sda", SYMLINK+="mmcblk0"
 KERNEL=="sda?", SYMLINK+="mmcblk0p%n"
 KERNEL=="sda2", SYMLINK+="root"
 EOF
-# Fix a well documented issue - the kernel panics as init exits;
+
+# Work around a known issue with qemu-arm, versatile board and raspbian for at least qemu-arm < 2.8.0
+# This works but modifies the image so it is recommended to upgrade QEMU
 # Ref: http://stackoverflow.com/questions/38837606/emulate-raspberry-pi-raspbian-with-qemu
-cat > tmpmnt/etc/ld.so.preload <<EOF
-#/usr/lib/arm-linux-gnueabihf/libarmmem.so
-EOF
+
+QEMU_MAJOR=$( qemu-system-arm --version | head -1 | grep -oP '\d+.\d+.\d+' | cut -d. -f1 )
+QEMU_MINOR=$( qemu-system-arm --version | head -1 | grep -oP '\d+.\d+.\d+' | cut -d. -f2 )
+
+if [[ $QEMU_MAJOR == 2 ]] && [[ $QEMU_MINOR < 8 ]]; then sed -i '/^[^#].*libarmmem.so/s/^\(.*\)$/#\1/' tmpmnt/etc/ld.so.preload; fi
+if [[ $QEMU_MAJOR <  2 ]]                         ; then sed -i '/^[^#].*libarmmem.so/s/^\(.*\)$/#\1/' tmpmnt/etc/ld.so.preload; fi
 
 umount -l tmpmnt
 rmdir tmpmnt &>/dev/null
