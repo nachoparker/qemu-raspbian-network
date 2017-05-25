@@ -120,8 +120,8 @@ EOF
 # This works but modifies the image so it is recommended to upgrade QEMU
 # Ref: http://stackoverflow.com/questions/38837606/emulate-raspberry-pi-raspbian-with-qemu
 
-QEMU_MAJOR=$( qemu-system-arm --version | head -1 | grep -oP '\d+.\d+.\d+' | cut -d. -f1 )
-QEMU_MINOR=$( qemu-system-arm --version | head -1 | grep -oP '\d+.\d+.\d+' | cut -d. -f2 )
+QEMU_MAJOR=$( qemu-system-arm --version | grep -oP '\d+\.\d+\.\d+' | head -1 | cut -d. -f1 )
+QEMU_MINOR=$( qemu-system-arm --version | grep -oP '\d+\.\d+\.\d+' | head -1 | cut -d. -f2 )
 
 if [[ $QEMU_MAJOR == 2 ]] && [[ $QEMU_MINOR < 8 ]]; then sed -i '/^[^#].*libarmmem.so/s/^\(.*\)$/#\1/' tmpmnt/etc/ld.so.preload; fi
 if [[ $QEMU_MAJOR <  2 ]]                         ; then sed -i '/^[^#].*libarmmem.so/s/^\(.*\)$/#\1/' tmpmnt/etc/ld.so.preload; fi
