@@ -41,7 +41,7 @@ test -f $IMG && test -f $KERNEL || { echo "$IMG or $KERNEL not found"; exit; }
 
 # some more checks
 [[ "$NO_NETWORK" != "1" ]] && {
-    IP=$( ip a | grep "global $IFACE" | grep -oP '\d{1,3}(.\d{1,3}){3}' | head -1 )
+    IP=$( ip address | grep "global $IFACE" | grep -oP '\d{1,3}(.\d{1,3}){3}' | head -1 )
     [[ "$IP" == "" ]]      && { echo "no IP found for $IFACE"; NO_NETWORK=1; }
     type brctl &>/dev/null || { echo "brctl is not installed"; NO_NETWORK=1; }
     modprobe tun &>/dev/null
@@ -77,14 +77,14 @@ EOF
   IPFW=$( sysctl net.ipv4.ip_forward | cut -d= -f2 )
   sysctl net.ipv4.ip_forward=1
 
-  ROUTES=$( ip r | grep $IFACE                       )
+  ROUTES=$( ip route | grep $IFACE )
   BRROUT=$( echo "$ROUTES" | sed "s=$IFACE=$BRIDGE=" )
   brctl addbr $BRIDGE
   brctl addif $BRIDGE $IFACE
-  ip l set up dev $BRIDGE
-  ip r flush dev $IFACE
-  ip a a $IP dev $BRIDGE
-  echo "$BRROUT" | tac | while read l; do ip r a $l; done
+  ip link set up dev $BRIDGE
+  ip route flush dev $IFACE
+  ip address add $IP dev $BRIDGE
+  echo "$BRROUT" | tac | while read l; do ip route add $l; done
 
   precreationg=$(ip tuntap list | cut -d: -f1 | sort)
   ip tuntap add user $USER mode tap
@@ -136,12 +136,12 @@ qemu-system-arm -kernel $KERNEL -cpu arm1176 -m 256 -M versatilepb $NET_ARGS \
 
 # restore network to what it was
 [[ "$NO_NETWORK" != "1" ]] && {
-  ip l set down dev $TAPIF
+  ip link set down dev $TAPIF
   ip tuntap del $TAPIF mode tap
   sysctl net.ipv4.ip_forward="$IPFW"
-  ip l set down dev $BRIDGE
+  ip link set down dev $BRIDGE
   brctl delbr $BRIDGE
-  echo "$ROUTES" | tac | while read l; do ip r a $l; done
+  echo "$ROUTES" | tac | while read l; do ip route add $l; done
 }
 
 # License
