@@ -77,14 +77,23 @@ EOF
   IPFW=$( sysctl net.ipv4.ip_forward | cut -d= -f2 )
   sysctl net.ipv4.ip_forward=1
 
+  echo "Getting routes for interface: $IFACE"
   ROUTES=$( ip route | grep $IFACE )
+  echo "Changing those routes to bridge interface: $BRIDGE"
   BRROUT=$( echo "$ROUTES" | sed "s=$IFACE=$BRIDGE=" )
+  echo "Creating new bridge: $BRIDGE"
   brctl addbr $BRIDGE
+  echo "Adding $IFACE interface to bridge $BRIDGE"
   brctl addif $BRIDGE $IFACE
+  echo "Setting link up for: $BRIDGE"
   ip link set up dev $BRIDGE
+  echo "Flusing routes to interface: $IFACE"
   ip route flush dev $IFACE
+  echo "Adding IP address to bridge: $BRIDGE"
   ip address add $IP dev $BRIDGE
+  echo "Adding routes to bridge: $BRIDGE"
   echo "$BRROUT" | tac | while read l; do ip route add $l; done
+  echo "Routes to bridge $BRIDGE added"
 
   precreationg=$(ip tuntap list | cut -d: -f1 | sort)
   ip tuntap add user $USER mode tap
