@@ -41,7 +41,7 @@ test -f $IMG && test -f $KERNEL || { echo "$IMG or $KERNEL not found"; exit; }
 
 # some more checks
 [[ "$NO_NETWORK" != "1" ]] && {
-    IP=$( ip address | grep "global $IFACE" | grep -oP '\d{1,3}(.\d{1,3}){3}' | head -1 )
+    IP=$( ip address show dev "$IFACE" | grep global | grep -oP '\d{1,3}(.\d{1,3}){3}' | head -1 )
     [[ "$IP" == "" ]]      && { echo "no IP found for $IFACE"; NO_NETWORK=1; }
     type brctl &>/dev/null || { echo "brctl is not installed"; NO_NETWORK=1; }
     modprobe tun &>/dev/null
