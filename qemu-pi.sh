@@ -91,7 +91,7 @@ EOF
   postcreation=$(ip tuntap list | cut -d: -f1 | sort)
   TAPIF=$(comm -13 <(echo "$precreationg") <(echo "$postcreation"))
   [[ "$MAC" == "" ]] && printf -v MAC "52:54:%02x:%02x:%02x:%02x" \
-    $(( $RANDOM & 0xff)) $(( $RANDOM & 0xff )) $(( $RANDOM & 0xff)) $(( $RANDOM & 0xff ))
+    $(( $RANDOM & 0xff )) $(( $RANDOM & 0xff )) $(( $RANDOM & 0xff )) $(( $RANDOM & 0xff ))
 
   NET_ARGS="-net nic,macaddr=$MAC -net tap,ifname=$TAPIF"
 }
