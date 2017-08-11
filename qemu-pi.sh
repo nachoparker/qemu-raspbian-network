@@ -138,10 +138,15 @@ if [[ $QEMU_MAJOR <  2 ]]                         ; then sed -i '/^[^#].*libarmm
 umount -l tmpmnt
 rmdir tmpmnt &>/dev/null
 
+PARAMS_KERNEL="root=/dev/sda2 panic=1"
+if [[ "$NO_GRAPHIC" == "1" ]]; then
+  PARAMS_QEMU="-nographic"
+  PARAMS_KERNEL="$PARAMS_KERNEL vga=normal console=ttyAMA0"
+fi
+
 # do it
 qemu-system-arm -kernel $KERNEL -cpu arm1176 -m 256 -M versatilepb $NET_ARGS \
-  $( [[ "$NO_GRAPHIC" != "1" ]] || printf %s '-nographic' ) \
-  -no-reboot -append "root=/dev/sda2 panic=1 $( [[ "$NO_GRAPHIC" != "1" ]] || printf %s 'vga=normal console=ttyAMA0' )" -drive format=raw,file=$IMG \
+  $PARAMS_QEMU -no-reboot -drive format=raw,file=$IMG -append "$PARAMS_KERNEL"
 
 # restore network to what it was
 [[ "$NO_NETWORK" != "1" ]] && {
