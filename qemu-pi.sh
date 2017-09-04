@@ -35,7 +35,8 @@ BINARY_PATH=/usr/bin    # path prefix for binaries
 NO_GRAPHIC=0            # set to 1 to start in no graphic mode
 
 # sanity checks
-test -f $IMG && test -f $KERNEL || { echo "$IMG or $KERNEL not found"; exit; }
+type qemu-system-arm &>/dev/null || { echo "QEMU ARM not found"       ; exit 1; }
+test -f $IMG && test -f $KERNEL  || { echo "$IMG or $KERNEL not found"; exit 1; }
 
 [[ "$IFACE" == "" ]] || [[ "$BRIDGE" == "" ]] && NO_NETWORK=1
 
